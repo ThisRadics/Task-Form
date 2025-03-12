@@ -64,19 +64,19 @@ def main():
     st.markdown("### Tasks")
     col1, col2, col3 = st.columns(3)
     with col1:
-        task1 = st.text_input("Task 1 (10-11)")
+        task1 = st.text_input("Task 1 (10am-11am)")
     with col2:
-        task2 = st.text_input("Task 2 (11-12)")
+        task2 = st.text_input("Task 2 (11am-12pm)")
     with col3:
-        task3 = st.text_input("Task 3 (12:40 - 2)")
+        task3 = st.text_input("Task 3 (12:40pm - 2pm)")
 
     col4, col5, col6 = st.columns(3)
     with col4:
-        task4 = st.text_input("Task 4 (2-3)")
+        task4 = st.text_input("Task 4 (2pm-3pm)")
     with col5:
-        task5 = st.text_input("Task 5 (3-4)")
+        task5 = st.text_input("Task 5 (3pm-4pm)")
     with col6:
-        task6 = st.text_input("Task 6 (4-5)")
+        task6 = st.text_input("Task 6 (4pm-5pm)")
 
     # Centralized Submit Button with validation
     submit_cols = st.columns(3)

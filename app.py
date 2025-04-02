@@ -52,6 +52,14 @@ def connect_google_sheet():
         st.error(e)
         st.stop()
 
+# --- Helper: Get or Create Worksheet for Department ---
+def get_department_sheet(sheet_obj, department_name):
+    try:
+        return sheet_obj.worksheet(department_name)
+    except WorksheetNotFound:
+        # Create a new worksheet if it doesn't exist
+        return sheet_obj.add_worksheet(title=department_name, rows="100", cols="26")
+
 # 4) Sidebar: Login & Guidelines
 with st.sidebar:
     st.header("Login")
@@ -79,8 +87,7 @@ def page_your_task():
     st.title("Your Task - Write Tasks to the Sheet")
     st.markdown("---")
     sheet_obj = connect_google_sheet()
-    sheet1 = sheet_obj.sheet1
-
+    
     # Input fields arranged in columns
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
@@ -116,7 +123,9 @@ def page_your_task():
             # Row format: Date, Name, Email, Department, Project, Task1, ..., Task6
             row_data = [str(date_val), name, email, department, project, task1, task2, task3, task4, task5, task6]
             try:
-                sheet1.append_row(row_data)
+                # Get or create the worksheet based on the selected department
+                department_sheet = get_department_sheet(sheet_obj, department)
+                department_sheet.append_row(row_data)
                 st.success("Tasks submitted successfully!")
             except Exception as e:
                 st.error("Error appending row to the sheet.")
@@ -127,6 +136,7 @@ if st.session_state.logged_in:
     page_your_task()
 else:
     st.warning("Please log in from the sidebar to continue.")
+
 
 
 

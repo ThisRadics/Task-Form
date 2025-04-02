@@ -5,9 +5,11 @@ import gspread
 from dotenv import load_dotenv
 
 def main():
-    # Load environment variables from .env
+    # Load environment variables from .env for non-sensitive values (optional)
     load_dotenv()
-    google_sheet_id = os.getenv("GOOGLE_SHEET_ID")
+    
+    # Optionally, load GOOGLE_SHEET_ID from secrets as well, if you want to keep it out of .env:
+    google_sheet_id = st.secrets["general"]["GOOGLE_SHEET_ID"] if "general" in st.secrets and "GOOGLE_SHEET_ID" in st.secrets["general"] else os.getenv("GOOGLE_SHEET_ID")
 
     # Set up Streamlit page config
     st.set_page_config(page_title="Safebox Task and Accountability Form", layout="wide")
@@ -33,11 +35,10 @@ def main():
         """, unsafe_allow_html=True
     )
 
-    # Connect to Google Sheets using the service account credentials
-    creds = Credentials.from_service_account_file(
-        'credentials.json',
-        scopes=["https://www.googleapis.com/auth/spreadsheets"]
-    )
+    # Connect to Google Sheets using credentials from Streamlit secrets.
+    # Replace file-based credentials with credentials loaded from st.secrets.
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = Credentials.from_service_account_info(creds_dict)
     client = gspread.authorize(creds)
 
     # Top section: Name, Department, Project, Date
@@ -82,7 +83,7 @@ def main():
     submit_cols = st.columns(3)
     with submit_cols[1]:
         if st.button("Submit"):
-            # Check if all required fields are filled (trim whitespace)
+            # Validate that all required fields are filled (trim whitespace)
             if not all([
                 name.strip(), 
                 project.strip(), 
@@ -112,18 +113,16 @@ def main():
                 worksheet = client.open_by_key(google_sheet_id).worksheet(department)
                 all_rows = worksheet.get_all_values()
 
-                # Initialize variable to track if an entry exists.
-                # Assuming the first row is header, we check from row 2 onward.
+                # Check if an entry exists (matching Date and Name; assuming header is in the first row)
                 row_to_update = None
                 for idx, row in enumerate(all_rows[1:], start=2):
-                    # Compare Date and Name (case-insensitive)
                     if row and len(row) >= 2:
                         if row[0] == str(date) and row[1].strip().lower() == name.strip().lower():
                             row_to_update = idx
                             break
 
                 if row_to_update:
-                    # Update existing row (columns A to I for 9 columns)
+                    # Update the existing row (columns A to I for 9 columns)
                     worksheet.update(f'A{row_to_update}:I{row_to_update}', [row_data])
                     st.success("Your existing submission for this date has been updated.")
                 else:
@@ -133,11 +132,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
 
 
 

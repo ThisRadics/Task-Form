@@ -526,15 +526,15 @@ from gspread.exceptions import WorksheetNotFound
 # 1) Set up Streamlit page config first
 st.set_page_config(page_title="Safebox Tasks Manager", layout="wide")
 
-# 2) Load config from Streamlit secrets
+# 2) Load configuration from Streamlit secrets
 CONFIG = {
-    "USERNAME": st.secrets["APP_USERNAME"],
-    "PASSWORD": st.secrets["APP_PASSWORD"],
-    "GOOGLE_SHEET_ID": st.secrets["GOOGLE_SHEET_ID"],
-    "SMTP_SERVER": st.secrets["SMTP_SERVER"],
-    "SMTP_PORT": st.secrets["SMTP_PORT"],
-    "SMTP_USER": st.secrets["SMTP_USER"],
-    "SMTP_PASSWORD": st.secrets["SMTP_PASSWORD"]
+    "USERNAME": st.secrets.general.APP_USERNAME,
+    "PASSWORD": st.secrets.general.APP_PASSWORD,
+    "GOOGLE_SHEET_ID": st.secrets.general.GOOGLE_SHEET_ID,
+    "SMTP_SERVER": st.secrets.smtp.SMTP_SERVER,
+    "SMTP_PORT": st.secrets.smtp.SMTP_PORT,
+    "SMTP_USER": st.secrets.smtp.SMTP_USER,
+    "SMTP_PASSWORD": st.secrets.smtp.SMTP_PASSWORD,
 }
 
 # 3) Initialize session state variables
@@ -553,8 +553,9 @@ def safe_rerun():
 # --- Helper: Load Google Credentials ---
 def load_google_credentials():
     try:
+        creds_info = st.secrets.google_credentials
         creds = Credentials.from_service_account_info(
-            st.secrets["google_credentials"],
+            creds_info,
             scopes=["https://www.googleapis.com/auth/spreadsheets"]
         )
         return creds
@@ -604,8 +605,6 @@ with st.sidebar:
         "2. Each page has a back arrow to return to the landing page.\n"
         "3. All buttons display a 2-second spinner."
     )
-
-# ... (rest of the code remains identical from the original, including page definitions and rendering logic)
 
 # 5) Landing Page: Three side-by-side buttons
 def landing_page():
@@ -675,6 +674,7 @@ def page_your_task():
         if not all([name.strip(), email.strip(), department.strip(), project.strip()]):
             st.error("Please fill in Name, Email, Department, and Project.")
         else:
+            # Row format: Date, Name, Email, Department, Project, Task1, ..., Task6
             row_data = [str(date_val), name, email, department, project, task1, task2, task3, task4, task5, task6]
             try:
                 sheet1.append_row(row_data)
@@ -714,7 +714,7 @@ def page_edit_team():
                 matched_row = None
                 row_index = None
                 for idx, row in enumerate(all_rows, start=1):
-                    if idx == 1:
+                    if idx == 1:  # skip header row
                         continue
                     if len(row) >= 2:
                         if row[0].strip() == str(date_val) and row[1].strip().lower() == name.strip().lower():
@@ -723,7 +723,7 @@ def page_edit_team():
                             break
                 if matched_row and row_index:
                     st.success("Tasks found:")
-                    tasks = matched_row[5:11]
+                    tasks = matched_row[5:11]  # Assuming tasks start from column F
                     while len(tasks) < 6:
                         tasks.append("")
                     colA, colB, colC = st.columns(3)

@@ -362,6 +362,8 @@
 #         page_schedule_monthly()
 # else:
 #     st.warning("Please log in from the sidebar to continue.")
+
+
 import json
 import time
 import streamlit as st
@@ -372,6 +374,12 @@ from gspread.exceptions import WorksheetNotFound
 
 # 1) Set up Streamlit page config first
 st.set_page_config(page_title="Safebox Tasks Manager", layout="wide")
+
+# Convert st.secrets to a JSON string
+service_account_info = json.loads(st.secrets["google_service_account"])
+
+# Authenticate with Google
+credentials = Credentials.from_service_account_info(service_account_info)
 
 # 2) Load config from st.secrets (configured via Streamlit Cloud)
 # Your secrets.toml should define these keys at the root level:

@@ -76,7 +76,7 @@ with st.sidebar:
 
 # 5) Standalone Page: Tasks and Accountability Form
 def page_your_task():
-    st.title("Your Task - Write Tasks to the Sheet")
+    st.title("Tasks and Accountability Form")
     st.markdown("---")
     sheet_obj = connect_google_sheet()
     

@@ -526,7 +526,7 @@ from gspread.exceptions import WorksheetNotFound
 # 1) Set up Streamlit page config first
 st.set_page_config(page_title="Safebox Tasks Manager", layout="wide")
 
-# 2) Load configuration from Streamlit secrets
+# 2) Load config from Streamlit secrets (replacing local .env)
 CONFIG = {
     "USERNAME": st.secrets.general.APP_USERNAME,
     "PASSWORD": st.secrets.general.APP_PASSWORD,
@@ -560,7 +560,7 @@ def load_google_credentials():
         )
         return creds
     except Exception as e:
-        st.error("Error loading Google credentials from secrets.")
+        st.error("Error loading Google credentials from secrets. Please ensure your credentials are valid.")
         st.error(e)
         st.stop()
 
@@ -583,6 +583,11 @@ def get_or_create_monthly_sheet(sheet_obj):
     except WorksheetNotFound:
         monthly_sheet = sheet_obj.add_worksheet(title="MonthlyPlan", rows="100", cols="26")
     return monthly_sheet
+
+# --- (Optional) Helper: Send Email ---
+# Note: With the new approach, the app no longer sends emails directly.
+# Instead, it writes the supervisor comment to a designated column in the sheet.
+# An external Apps Script is responsible for monitoring that column and triggering emails.
 
 # 4) Sidebar: Login & Guidelines
 with st.sidebar:
@@ -723,7 +728,7 @@ def page_edit_team():
                             break
                 if matched_row and row_index:
                     st.success("Tasks found:")
-                    tasks = matched_row[5:11]  # Assuming tasks start from column F
+                    tasks = matched_row[5:11]  # Assuming tasks start from column F (after Date, Name, Email, Department, Project)
                     while len(tasks) < 6:
                         tasks.append("")
                     colA, colB, colC = st.columns(3)
@@ -780,6 +785,7 @@ def page_schedule_monthly():
     plans = st.text_area("Plans:", height=70)
     st.markdown("---")
     st.subheader("Weeks Breakdown (2x2 Matrix)")
+    # Top row: Week 1 and Week 2
     col_week_top = st.columns(2)
     with col_week_top[0]:
         st.write("**WEEK 1**")
@@ -793,6 +799,7 @@ def page_schedule_monthly():
         wk2_plans = st.text_input("Week 2 Plans:", key="wk2_plans")
         wk2_individual = st.text_input("Week 2 Individual Task:", key="wk2_individual")
         wk2_completed = st.text_input("Week 2 Task Completed:", key="wk2_completed")
+    # Bottom row: Week 3 and Week 4
     col_week_bottom = st.columns(2)
     with col_week_bottom[0]:
         st.write("**WEEK 3**")
@@ -814,6 +821,7 @@ def page_schedule_monthly():
         monthly_sheet = get_or_create_monthly_sheet(sheet_obj)
         header = monthly_sheet.row_values(1)
         target_col = None
+        # Search the entire header row for the month name (ignoring case)
         for idx, cell_val in enumerate(header, start=1):
             if cell_val.strip().lower() == month_name.lower():
                 target_col = idx
@@ -822,20 +830,28 @@ def page_schedule_monthly():
             st.error(f"Could not find a column for {month_name} in the header: {header}")
             return
         try:
+            # Write monthly data starting from row 2, skipping rows 4, 9, 14, and 19.
             monthly_sheet.update_cell(2, target_col, monthly_goals)
             monthly_sheet.update_cell(3, target_col, kpis)
+            # Week 1: rows 5-8
             monthly_sheet.update_cell(5, target_col, st.session_state.get("wk1_goals", "")) 
             monthly_sheet.update_cell(6, target_col, st.session_state.get("wk1_plans", ""))
             monthly_sheet.update_cell(7, target_col, st.session_state.get("wk1_individual", ""))
             monthly_sheet.update_cell(8, target_col, st.session_state.get("wk1_completed", ""))
+            
+            # Week 2: rows 10-13
             monthly_sheet.update_cell(10, target_col, st.session_state.get("wk2_goals", "")) 
             monthly_sheet.update_cell(11, target_col, st.session_state.get("wk2_plans", ""))
             monthly_sheet.update_cell(12, target_col, st.session_state.get("wk2_individual", ""))
             monthly_sheet.update_cell(13, target_col, st.session_state.get("wk2_completed", ""))
+            
+            # Week 3: rows 15-18
             monthly_sheet.update_cell(15, target_col, st.session_state.get("wk3_goals", "")) 
             monthly_sheet.update_cell(16, target_col, st.session_state.get("wk3_plans", ""))
             monthly_sheet.update_cell(17, target_col, st.session_state.get("wk3_individual", ""))
             monthly_sheet.update_cell(18, target_col, st.session_state.get("wk3_completed", ""))
+            
+            # Week 4: rows 20-23
             monthly_sheet.update_cell(20, target_col, st.session_state.get("wk4_goals", "")) 
             monthly_sheet.update_cell(21, target_col, st.session_state.get("wk4_plans", ""))
             monthly_sheet.update_cell(22, target_col, st.session_state.get("wk4_individual", ""))

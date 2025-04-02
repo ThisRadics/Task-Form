@@ -377,14 +377,15 @@ st.set_page_config(page_title="Safebox Tasks Manager", layout="wide")
 # Your secrets.toml should define these keys at the root level:
 # APP_USERNAME, APP_PASSWORD, GOOGLE_SHEET_ID, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
 CONFIG = {
-    "USERNAME": st.secrets["APP_USERNAME"],
-    "PASSWORD": st.secrets["APP_PASSWORD"],
-    "GOOGLE_SHEET_ID": st.secrets["GOOGLE_SHEET_ID"],
-    "SMTP_SERVER": st.secrets["SMTP_SERVER"],
-    "SMTP_PORT": st.secrets["SMTP_PORT"],
-    "SMTP_USER": st.secrets["SMTP_USER"],
-    "SMTP_PASSWORD": st.secrets["SMTP_PASSWORD"]
+    "USERNAME": st.secrets["general"]["APP_USERNAME"],
+    "PASSWORD": st.secrets["general"]["APP_PASSWORD"],
+    "GOOGLE_SHEET_ID": st.secrets["general"]["GOOGLE_SHEET_ID"],
+    "SMTP_SERVER": st.secrets["smtp"]["SMTP_SERVER"],
+    "SMTP_PORT": st.secrets["smtp"]["SMTP_PORT"],
+    "SMTP_USER": st.secrets["smtp"]["SMTP_USER"],
+    "SMTP_PASSWORD": st.secrets["smtp"]["SMTP_PASSWORD"]
 }
+
 
 # 3) Initialize session state variables
 if "logged_in" not in st.session_state:

@@ -1,20 +1,31 @@
 import os
+import time
 import streamlit as st
-from google.oauth2.service_account import Credentials
 import gspread
+from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
 
+def connect_google_sheet(google_sheet_id):
+    # Load Google credentials from Streamlit secrets (stored in the "gcp_service_account" section)
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    client = gspread.authorize(creds)
+    return client.open_by_key(google_sheet_id)
+
 def main():
-    # Load environment variables from .env for non-sensitive values (optional)
+    # Load environment variables from .env for non-sensitive fallback (local testing)
     load_dotenv()
     
-    # Optionally, load GOOGLE_SHEET_ID from secrets as well, if you want to keep it out of .env:
-    google_sheet_id = st.secrets["general"]["GOOGLE_SHEET_ID"] if "general" in st.secrets and "GOOGLE_SHEET_ID" in st.secrets["general"] else os.getenv("GOOGLE_SHEET_ID")
-
-    # Set up Streamlit page config
+    # Use GOOGLE_SHEET_ID from st.secrets (in the "general" section) if available; otherwise fallback to .env
+    if "general" in st.secrets and "GOOGLE_SHEET_ID" in st.secrets["general"]:
+        google_sheet_id = st.secrets["general"]["GOOGLE_SHEET_ID"]
+    else:
+        google_sheet_id = os.getenv("GOOGLE_SHEET_ID")
+    
+    # Set up Streamlit page configuration
     st.set_page_config(page_title="Safebox Task and Accountability Form", layout="wide")
-
-    # Sidebar with instructions
+    
+    # Sidebar instructions
     st.sidebar.title("Instructions")
     st.sidebar.info(
         """
@@ -27,79 +38,73 @@ def main():
         5. Click the **Submit** button to record your entry.
         """
     )
-
+    
     # Main title
     st.markdown(
         """
         <h1 style="text-align: center;">SAFEBOX TASK AND ACCOUNTABILITY FORM</h1>
         """, unsafe_allow_html=True
     )
+    
+    # Mimic the "Back to Landing" button (if needed for navigation)
+    if st.button("← Back to Landing"):
+        st.experimental_rerun()  # In a multi-page app this would navigate back
+    
+    st.markdown("---")
+    
+    # Connect to the Google Sheet and select the primary worksheet
+    sheet_obj = connect_google_sheet(google_sheet_id)
+    sheet1 = sheet_obj.sheet1
 
-    # Connect to Google Sheets using credentials from Streamlit secrets.
-    # Replace file-based credentials with credentials loaded from st.secrets.
-    creds_dict = st.secrets["gcp_service_account"]
-    creds = Credentials.from_service_account_info(creds_dict)
-    client = gspread.authorize(creds)
-
-    # Top section: Name, Department, Project, Date
-    with st.container():
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            name = st.text_input("Name")
-        with col2:
-            department_options = [
-                "STARWOX", 
-                "ZUMMEY", 
-                "SAFEBOX ENERGY", 
-                "CREATIVE", 
-                "EXECUTIVE ASSISTANTS", 
-                "DEVELOPERS"
-            ]
-            department = st.selectbox("Department", department_options)
-        with col3:
-            project = st.text_input("Project")
-        with col4:
-            date = st.date_input("Date")
-
-    # Tasks section: 3x2 matrix layout
-    st.markdown("### Tasks")
-    col1, col2, col3 = st.columns(3)
+    # Top section: 5-column layout for Name, Email, Department, Project, and Date
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        task1 = st.text_input("Task 1 (10am-11am)")
+        name = st.text_input("Name")
     with col2:
-        task2 = st.text_input("Task 2 (11am-12pm)")
+        email = st.text_input("Email")
     with col3:
-        task3 = st.text_input("Task 3 (12:40pm - 2pm)")
-
-    col4, col5, col6 = st.columns(3)
+        department_options = [
+            "STARWOX", 
+            "ZUMMEY", 
+            "SAFEBOX ENERGY", 
+            "CREATIVE", 
+            "EXECUTIVE ASSISTANTS", 
+            "DEVELOPERS"
+        ]
+        department = st.selectbox("Department", department_options)
     with col4:
-        task4 = st.text_input("Task 4 (2pm-3pm)")
+        project = st.text_input("Project")
     with col5:
-        task5 = st.text_input("Task 5 (3pm-4pm)")
-    with col6:
-        task6 = st.text_input("Task 6 (4pm-5pm)")
-
-    # Centralized Submit Button with validation
+        date_val = st.date_input("Date")
+    
+    # Tasks section: 3x2 matrix layout
+    st.markdown("### Tasks (1 - 6)")
+    colA, colB, colC = st.columns(3)
+    with colA:
+        task1 = st.text_input("Task 1 (10-11am)")
+        task2 = st.text_input("Task 2 (11-12pm)")
+    with colB:
+        task3 = st.text_input("Task 3 (12:40-2pm)")
+        task4 = st.text_input("Task 4 (2-3pm)")
+    with colC:
+        task5 = st.text_input("Task 5 (3-4pm)")
+        task6 = st.text_input("Task 6 (4-5pm)")
+    
+    # Centralized Submit button with field validation
     submit_cols = st.columns(3)
     with submit_cols[1]:
-        if st.button("Submit"):
-            # Validate that all required fields are filled (trim whitespace)
-            if not all([
-                name.strip(), 
-                project.strip(), 
-                task1.strip(), 
-                task2.strip(), 
-                task3.strip(), 
-                task4.strip(), 
-                task5.strip(), 
-                task6.strip()
-            ]):
-                st.error("Please fill in all fields before submitting.")
+        if st.button("Submit Tasks"):
+            with st.spinner("Submitting tasks..."):
+                time.sleep(2)
+            if not all([name.strip(), email.strip(), department.strip(), project.strip()]):
+                st.error("Please fill in Name, Email, Department, and Project.")
             else:
-                # Prepare row data (9 columns): Date, Name, Project, Task1, Task2, Task3, Task4, Task5, Task6
+                # Prepare the row data: Date, Name, Email, Department, Project, Task1, ..., Task6
                 row_data = [
-                    str(date),
+                    str(date_val),
                     name,
+                    email,
+                    department,
                     project,
                     task1,
                     task2,
@@ -108,27 +113,12 @@ def main():
                     task5,
                     task6
                 ]
-
-                # Open the worksheet corresponding to the selected department
-                worksheet = client.open_by_key(google_sheet_id).worksheet(department)
-                all_rows = worksheet.get_all_values()
-
-                # Check if an entry exists (matching Date and Name; assuming header is in the first row)
-                row_to_update = None
-                for idx, row in enumerate(all_rows[1:], start=2):
-                    if row and len(row) >= 2:
-                        if row[0] == str(date) and row[1].strip().lower() == name.strip().lower():
-                            row_to_update = idx
-                            break
-
-                if row_to_update:
-                    # Update the existing row (columns A to I for 9 columns)
-                    worksheet.update(f'A{row_to_update}:I{row_to_update}', [row_data])
-                    st.success("Your existing submission for this date has been updated.")
-                else:
-                    # Append as a new row
-                    worksheet.append_row(row_data)
-                    st.success("Submitted.")
+                try:
+                    sheet1.append_row(row_data)
+                    st.success("Tasks submitted successfully!")
+                except Exception as e:
+                    st.error("Error appending row to the sheet.")
+                    st.error(e)
 
 if __name__ == "__main__":
     main()

@@ -464,7 +464,7 @@ with st.sidebar:
 
 # 5) Landing Page: Three side-by-side buttons
 def landing_page():
-    st.title("Safebox Tasks Manager - Landing Page")
+    st.title("Safebox Tasks Manager - Home Page")
     st.write("Choose an action below:")
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -489,7 +489,7 @@ def landing_page():
 # 6) Page: Your Task (Write Tasks to the Sheet)
 def page_your_task():
     st.title("Your Task - Write Tasks to the Sheet")
-    if st.button("← Back to Landing"):
+    if st.button("← Homepage"):
         with st.spinner("Returning..."):
             time.sleep(2)
         st.session_state.page = "landing"
@@ -542,10 +542,10 @@ def page_your_task():
 # 7) Page: Edit Team's Task (Fetch & Comment)
 def page_edit_team():
     st.title("Edit Team's Task - Fetch & Comment")
-    if st.button("← Back to Landing"):
+    if st.button("← Back to Homepage"):
         with st.spinner("Returning..."):
             time.sleep(2)
-        st.session_state.page = "landing"
+        st.session_state.page = "Home"
         safe_rerun()
     st.markdown("---")
     sheet_obj = connect_google_sheet()
@@ -618,10 +618,10 @@ def page_edit_team():
 # 8) Page: Schedule Monthly Tasks
 def page_schedule_monthly():
     st.title("Schedule Monthly Tasks")
-    if st.button("← Back to Landing"):
+    if st.button("← Homepage"):
         with st.spinner("Returning..."):
             time.sleep(2)
-        st.session_state.page = "landing"
+        st.session_state.page = "home"
         safe_rerun()
     st.markdown("---")
     monthly_date = st.date_input("Select a Date (month used for submission)")

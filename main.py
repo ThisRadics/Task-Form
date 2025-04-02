@@ -528,13 +528,13 @@ st.set_page_config(page_title="Safebox Tasks Manager", layout="wide")
 
 # 2) Load config from Streamlit secrets (replacing local .env)
 CONFIG = {
-    "USERNAME": st.secrets.general.APP_USERNAME,
-    "PASSWORD": st.secrets.general.APP_PASSWORD,
-    "GOOGLE_SHEET_ID": st.secrets.general.GOOGLE_SHEET_ID,
-    "SMTP_SERVER": st.secrets.smtp.SMTP_SERVER,
-    "SMTP_PORT": st.secrets.smtp.SMTP_PORT,
-    "SMTP_USER": st.secrets.smtp.SMTP_USER,
-    "SMTP_PASSWORD": st.secrets.smtp.SMTP_PASSWORD,
+    "USERNAME": st.secrets["general"]["APP_USERNAME"],
+    "PASSWORD": st.secrets["general"]["APP_PASSWORD"],
+    "GOOGLE_SHEET_ID": st.secrets["general"]["GOOGLE_SHEET_ID"],
+    "SMTP_SERVER": st.secrets["smtp"]["SMTP_SERVER"],
+    "SMTP_PORT": st.secrets["smtp"]["SMTP_PORT"],
+    "SMTP_USER": st.secrets["smtp"]["SMTP_USER"],
+    "SMTP_PASSWORD": st.secrets["smtp"]["SMTP_PASSWORD"],
 }
 
 # 3) Initialize session state variables
@@ -553,7 +553,7 @@ def safe_rerun():
 # --- Helper: Load Google Credentials ---
 def load_google_credentials():
     try:
-        creds_info = st.secrets.google_credentials
+        creds_info = st.secrets["google_credentials"]
         creds = Credentials.from_service_account_info(
             creds_info,
             scopes=["https://www.googleapis.com/auth/spreadsheets"]
@@ -728,7 +728,7 @@ def page_edit_team():
                             break
                 if matched_row and row_index:
                     st.success("Tasks found:")
-                    tasks = matched_row[5:11]  # Assuming tasks start from column F (after Date, Name, Email, Department, Project)
+                    tasks = matched_row[5:11]  # Assuming tasks start from column F
                     while len(tasks) < 6:
                         tasks.append("")
                     colA, colB, colC = st.columns(3)
@@ -873,3 +873,4 @@ if st.session_state.logged_in:
         page_schedule_monthly()
 else:
     st.warning("Please log in from the sidebar to continue.")
+

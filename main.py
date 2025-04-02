@@ -120,8 +120,8 @@ def landing_page():
 
 # 6) Page: Your Task (Write Tasks to the Sheet)
 def page_your_task():
-    st.title("Your Task - Write Tasks to the Sheet")
-    if st.button("← Homepage"):
+    st.title("Task and Accountability Form")
+    if st.button("← Home page"):
         with st.spinner("Returning..."):
             time.sleep(2)
         st.session_state.page = "landing"
@@ -173,8 +173,8 @@ def page_your_task():
 
 # 7) Page: Edit Team's Task (Fetch & Comment)
 def page_edit_team():
-    st.title("Edit Team's Task - Fetch & Comment")
-    if st.button("← Back to Homepage"):
+    st.title("Team's Task Editor")
+    if st.button("← Home page"):
         with st.spinner("Returning..."):
             time.sleep(2)
         st.session_state.page = "Home"
@@ -250,7 +250,7 @@ def page_edit_team():
 # 8) Page: Schedule Monthly Tasks
 def page_schedule_monthly():
     st.title("Schedule Monthly Tasks")
-    if st.button("← Homepage"):
+    if st.button("← Home page"):
         with st.spinner("Returning..."):
             time.sleep(2)
         st.session_state.page = "home"

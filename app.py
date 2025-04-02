@@ -6,7 +6,7 @@ from datetime import datetime
 from gspread.exceptions import WorksheetNotFound
 
 # 1) Set up Streamlit page config
-st.set_page_config(page_title="Safebox Tasks Manager - Your Task", layout="wide")
+st.set_page_config(page_title="Safebox Tasks Manager", layout="wide")
 
 # 2) Load config from Streamlit secrets (replacing local .env)
 CONFIG = {

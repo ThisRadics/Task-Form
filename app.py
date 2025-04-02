@@ -77,10 +77,6 @@ with st.sidebar:
 # 5) Standalone Page: Your Task (Write Tasks to the Sheet)
 def page_your_task():
     st.title("Your Task - Write Tasks to the Sheet")
-    # This Back button is retained from the original, though in this standalone version it simply informs the user.
-    if st.button("← Back to Landing"):
-        st.info("This is a standalone version. No landing page is available.")
-        safe_rerun()
     st.markdown("---")
     sheet_obj = connect_google_sheet()
     sheet1 = sheet_obj.sheet1

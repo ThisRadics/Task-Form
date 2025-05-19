@@ -149,16 +149,15 @@ def page_your_task():
                 st.error("Error appending row.")
                 st.error(e)
 
-# 7) Edit Team's Task Page
+# 7) Page: Edit Team's Task (Fetch & Comment)
 def page_edit_team():
-    st.title("Edit Team's Task")
-    if st.button("← Back"):
+    st.title("Edit Team's Task - Fetch & Comment")
+    if st.button("← Back to Landing"):
         with st.spinner("Returning..."):
-            time.sleep(SPINNER_TIME)
+            time.sleep(2)
         st.session_state.page = "landing"
         safe_rerun()
-
-     st.markdown("---")
+    st.markdown("---")
     sheet_obj = connect_google_sheet()
     # New first row: Name, dropdown for sheet, Date (Email is now stored only on Your Task page)
     col1, col2, col3 = st.columns(3)

@@ -158,48 +158,76 @@ def page_edit_team():
         st.session_state.page = "landing"
         safe_rerun()
 
+     st.markdown("---")
     sheet_obj = connect_google_sheet()
-    cols = st.columns(3)
-    name = cols[0].text_input("Name")
-    ws   = cols[1].selectbox("Sheet", ["STARWOX","ZUMMEY","SAFEBOX ENERGY","CREATIVE","EXEC ASSISTANTS","DEVELOPERS"])
-    date = cols[2].date_input("Date")
-
+    # New first row: Name, dropdown for sheet, Date (Email is now stored only on Your Task page)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        name = st.text_input("Name (case-insensitive)")
+    with col2:
+        # Use the same department list as on Your Task page (assuming team tasks are on these sheets)
+        sheet_options = ["STARWOX", "ZUMMEY", "SAFEBOX ENERGY", "CREATIVE", "EXECUTIVE ASSISTANTS", "DEVELOPERS"]
+        selected_sheet = st.selectbox("Select Sheet", sheet_options)
+    with col3:
+        date_val = st.date_input("Date")
+    
     if st.button("Fetch Tasks"):
-        with st.spinner("Fetching..."):
-            time.sleep(SPINNER_TIME)
-        sht  = sheet_obj.worksheet(ws)
-        rows = sht.get_all_values()
-        match, idx = None, None
-        for i, r in enumerate(rows[1:], start=2):
-            if r[0]==str(date) and r[1].lower()==name.lower():
-                match, idx = r, i
-                break
-        if not match:
-            st.warning("No matching row.")
-            return
-
-        tasks = (match[5:11] + [""]*6)[:6]
-        c1,c2,c3 = st.columns(3)
-        nt1 = c1.text_input("Task 1", value=tasks[0], key="t1")
-        nt2 = c2.text_input("Task 2", value=tasks[1], key="t2")
-        nt3 = c3.text_input("Task 3", value=tasks[2], key="t3")
-        nt4 = c1.text_input("Task 4", value=tasks[3], key="t4")
-        nt5 = c2.text_input("Task 5", value=tasks[4], key="t5")
-        nt6 = c3.text_input("Task 6", value=tasks[5], key="t6")
-        st.session_state.row_idx = idx
-
-    if st.button("Send Comments"):
-        with st.spinner("Submitting comment..."):
-            time.sleep(SPINNER_TIME)
-        comment = st.text_area("Supervisor's Comment")
-        if not comment.strip():
-            st.error("Enter a comment.")
+        with st.spinner("Fetching tasks..."):
+            time.sleep(2)
+        if not name.strip():
+            st.error("Please enter a name.")
         else:
             try:
-                sheet_obj.worksheet(ws).update_cell(st.session_state.row_idx, 12, comment)
-                st.success("Comment submitted!✅")
+                sheet_to_fetch = sheet_obj.worksheet(selected_sheet)
+                all_rows = sheet_to_fetch.get_all_values()
+                matched_row = None
+                row_index = None
+                for idx, row in enumerate(all_rows, start=1):
+                    if idx == 1:  # skip header row
+                        continue
+                    if len(row) >= 2:
+                        if row[0].strip() == str(date_val) and row[1].strip().lower() == name.strip().lower():
+                            matched_row = row
+                            row_index = idx
+                            break
+                if matched_row and row_index:
+                    st.success("Tasks found:")
+                    tasks = matched_row[5:11]  # Assuming tasks start from column F (after Date, Name, Email, Department, Project)
+                    while len(tasks) < 6:
+                        tasks.append("")
+                    colA, colB, colC = st.columns(3)
+                    new_task1 = colA.text_input("Task 1", value=tasks[0], key="edit_task1")
+                    new_task2 = colB.text_input("Task 2", value=tasks[1], key="edit_task2")
+                    new_task3 = colC.text_input("Task 3", value=tasks[2], key="edit_task3")
+                    colD, colE, colF = st.columns(3)
+                    new_task4 = colD.text_input("Task 4", value=tasks[3], key="edit_task4")
+                    new_task5 = colE.text_input("Task 5", value=tasks[4], key="edit_task5")
+                    new_task6 = colF.text_input("Task 6", value=tasks[5], key="edit_task6")
+                    # Save the row index in session state for later update
+                    st.session_state.matched_row_index = row_index
+                else:
+                    st.warning("No matching tasks found for that Name & Date.")
             except Exception as e:
-                st.error("Error updating comment.")
+                st.error("Error fetching tasks from the sheet.")
+                st.error(e)
+    st.markdown("---")
+    supervisor_comment = st.text_area("Supervisor's Comment")
+    if st.button("Send Comments"):
+        with st.spinner("Submitting comment..."):
+            time.sleep(2)
+        if not supervisor_comment.strip():
+            st.error("Please enter a comment before sending.")
+        else:
+            # Write the supervisor comment to column L (12th column)
+            try:
+                if "matched_row_index" in st.session_state:
+                    sheet_to_update = sheet_obj.worksheet(selected_sheet)
+                    sheet_to_update.update_cell(st.session_state.matched_row_index, 12, supervisor_comment)
+                    st.success("Supervisor's comment submitted successfully!")
+                else:
+                    st.error("No matching task row found to update the comment.")
+            except Exception as e:
+                st.error("Error updating supervisor comment in the sheet.")
                 st.error(e)
 
 # 8) Schedule Monthly Tasks Page
